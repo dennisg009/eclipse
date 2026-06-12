@@ -31,8 +31,12 @@
       <div id="status" class="status">propagating orbits…</div>
     </div>
 
-    <!-- Right: live computation log (orrery view) -->
-    <div id="log" class="panel"></div>
+    <!-- Right column (orrery view): computation log + planet card share one
+         flex column so they can never overlap -->
+    <div id="right-col">
+      <div id="log" class="panel"></div>
+      <div id="planet-card" class="panel hidden"></div>
+    </div>
 
     <!-- Right: eclipse list + observer (orrery / earth views) -->
     <div id="sidebar" class="panel">
@@ -73,9 +77,6 @@
 
     <!-- Eclipse info card (earth / ground) -->
     <div id="info" class="panel hidden"></div>
-
-    <!-- Planet details popup (orrery view, on planet click) -->
-    <div id="planet-card" class="panel hidden"></div>
 
     <!-- Zoom buttons (orrery + earth views) -->
     <div id="zoom-controls">

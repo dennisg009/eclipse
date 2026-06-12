@@ -38,7 +38,17 @@ html, body {
 
 #hud { top: 16px; left: 16px; max-width: 320px; }
 #clockbox { top: 16px; right: 16px; text-align: right; min-width: 200px; }
-#log { top: 90px; right: 16px; width: 340px; max-height: calc(100vh - 200px); overflow-y: auto; }
+
+/* Right column: the log shrinks (and scrolls) to make room when the planet
+   card opens beneath it, so the two can never overlap. */
+#right-col {
+  position: fixed; top: 90px; right: 16px; bottom: 110px; width: 340px;
+  display: flex; flex-direction: column; gap: 12px;
+  pointer-events: none; z-index: 10;
+}
+#right-col > .panel { pointer-events: auto; position: static; }
+#log { min-height: 0; overflow-y: auto; }
+#planet-card { margin-top: auto; flex-shrink: 0; }
 #sidebar { bottom: 84px; left: 16px; width: 290px; max-height: 56vh; overflow-y: auto; }
 #timeline { bottom: 16px; left: 50%; transform: translateX(-50%); }
 #info { bottom: 112px; right: 16px; width: 320px; z-index: 12; }
@@ -105,7 +115,6 @@ h2 { margin: 14px 0 8px; font-size: 10px; text-transform: uppercase; letter-spac
 #zoom-controls { position: fixed; right: 16px; bottom: 16px; z-index: 11; display: flex; flex-direction: column; gap: 6px; }
 #zoom-controls .btn { width: 38px; height: 38px; padding: 0; font-size: 18px; line-height: 1; }
 
-#planet-card { right: 16px; bottom: 112px; width: 256px; z-index: 12; }
 #planet-card .head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
 #planet-card .head img { border-radius: 50%; }
 #planet-card h3 { margin: 2px 0 0; font-size: 16px; color: #fff; letter-spacing: 1.5px; }
@@ -198,10 +207,14 @@ h2 { margin: 14px 0 8px; font-size: 10px; text-transform: uppercase; letter-spac
   }
   .speed input[type=range] { width: 76px; }
 
-  /* Cards span the width above the timeline, leaving a lane for the zoom column */
-  #info, #planet-card {
+  /* Cards span the width above the timeline, leaving a lane for the zoom
+     column. The planet-card selector includes #right-col to outrank the
+     desktop `#right-col > .panel { position: static }` rule. */
+  #info, #right-col > #planet-card {
+    position: fixed;
     left: 12px; right: 64px; width: auto;
     bottom: calc(110px + env(safe-area-inset-bottom));
+    z-index: 12;
   }
   #zoom-controls { right: 12px; bottom: calc(110px + env(safe-area-inset-bottom)); }
 }
