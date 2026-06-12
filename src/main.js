@@ -35,7 +35,12 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
 renderer.setSize(innerWidth, innerHeight)
 
 const scene = new THREE.Scene()
-const SYSTEM_FOV = 55, GROUND_FOV = 16
+// Ground view defaults to a telephoto FOV: the Sun/Moon are drawn at their
+// true ~0.5° angular size, so a wide lens renders them honest-but-tiny. 5°
+// (~500mm equivalent — how real eclipse photos are shot) fills the frame with
+// the corona; the zoom buttons / wheel adjust it from 2° to 30°.
+const SYSTEM_FOV = 55, GROUND_FOV = 5
+const GROUND_FOV_MIN = 2, GROUND_FOV_MAX = 30
 const camera = new THREE.PerspectiveCamera(SYSTEM_FOV, innerWidth / innerHeight, 0.001, 8000)
 const controls = new OrbitControls(camera, sceneCanvas)
 controls.enableDamping = true
@@ -88,8 +93,12 @@ orrery.onFocus = (name) => {
   else if (name) planetCard.show(name, planetState(name, currentDate))
   else planetCard.hide()
 }
+// Closing the card with ✕ also releases the camera follow — otherwise the
+// view keeps tracking the planet with no visible way to stop.
+planetCard.onClose = () => { orrery.focus = null }
 
-// Zoom buttons: scale the orrery, or dolly the 3D camera in the earth view.
+// Zoom buttons: scale the orrery, dolly the camera in the earth view, or
+// change the telephoto focal length (FOV) in the ground view.
 const zoomStep = (f) => {
   if (activeView === 'orrery') {
     orrery.zoomBy(f)
@@ -98,10 +107,19 @@ const zoomStep = (f) => {
     off.setLength(Math.min(controls.maxDistance, Math.max(controls.minDistance, off.length())))
     camera.position.copy(controls.target).add(off)
     controls.update()
+  } else if (activeView === 'ground') {
+    camera.fov = Math.min(GROUND_FOV_MAX, Math.max(GROUND_FOV_MIN, camera.fov / f))
+    camera.updateProjectionMatrix()
   }
 }
 document.getElementById('zoom-in').addEventListener('click', () => zoomStep(1.4))
 document.getElementById('zoom-out').addEventListener('click', () => zoomStep(1 / 1.4))
+// scroll-to-zoom in the ground view (OrbitControls' dolly is pinned there)
+sceneCanvas.addEventListener('wheel', (e) => {
+  if (activeView !== 'ground') return
+  e.preventDefault()
+  zoomStep(Math.exp(-e.deltaY * 0.002))
+}, { passive: false })
 
 const statusEl = document.getElementById('status')
 
@@ -168,7 +186,7 @@ function setView(view) {
   document.getElementById('sidebar').classList.toggle('hidden', view === 'ground')
   document.getElementById('ground-controls').classList.toggle('hidden', view !== 'ground')
   document.getElementById('info').classList.toggle('hidden', view === 'orrery')
-  document.getElementById('zoom-controls').classList.toggle('hidden', view === 'ground')
+  // zoom buttons work in every view now (ground view: telephoto FOV)
   // On phones, arriving in Ground POV starts with the info card tucked away
   // so totality is front and center; the handle opens it on demand. Outside
   // Ground POV the handle controls the sidebar, so un-collapse the card —

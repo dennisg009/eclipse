@@ -26,6 +26,14 @@ export class PlanetCard {
     this.el = el
     this.name = null
     this._liveEl = null
+    this.onClose = null // fired only by the user's ✕ click, not programmatic hide()
+  }
+
+  _wireClose() {
+    this.el.querySelector('.close').addEventListener('click', () => {
+      this.hide()
+      this.onClose?.()
+    })
   }
 
   /** @param state result of planetState(name, date): { a, e, r } */
@@ -52,7 +60,7 @@ export class PlanetCard {
       <div class="foot">period computed from Kepler's third law: P = a³ᐟ² = ${state.a.toFixed(2)}³ᐟ² = ${P.toFixed(2)} yr</div>`
     this.el.classList.remove('hidden')
     this._liveEl = this.el.querySelector('.live')
-    this.el.querySelector('.close').addEventListener('click', () => this.hide())
+    this._wireClose()
   }
 
   /** Sun card. `rEarthAu` = current Earth–Sun distance from the Kepler engine. */
@@ -75,7 +83,7 @@ export class PlanetCard {
       <div class="foot">holds 99.86% of the solar system's mass · Earth's mean distance defines the AU: 149,597,870.7 km</div>`
     this.el.classList.remove('hidden')
     this._liveEl = this.el.querySelector('.live')
-    this.el.querySelector('.close').addEventListener('click', () => this.hide())
+    this._wireClose()
   }
 
   /** Refresh the live distance readout as time plays. */
