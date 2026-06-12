@@ -1,5 +1,13 @@
 # Deploying Orrery to dennisgavrilenko.com/projects/eclipse
 
+## Push-to-deploy (the normal path)
+
+Every push to `main` on GitHub (https://github.com/dennisg009/eclipse) builds
+and deploys automatically via `.github/workflows/deploy.yml`. It needs one repo
+secret: `CLOUDFLARE_API_TOKEN` — a Cloudflare API token with the
+**Account · Cloudflare Pages · Edit** permission. The manual steps below remain
+valid as a fallback and for first-time setup.
+
 This follows the same front-door pattern as InfoGlobe: a Vite SPA built with a
 `/projects/eclipse/` base, deployed to its own Cloudflare Pages project, with the
 existing `dg-router` Worker routing `/projects/eclipse/*` to it.
