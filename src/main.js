@@ -108,6 +108,30 @@ const statusEl = document.getElementById('status')
 // ---------- eclipse data ----------
 const eclipses = upcomingTotalEclipses(new Date(), 15)
 panel.setEclipses(eclipses)
+document.getElementById('ph-badge').textContent = String(eclipses.length)
+
+// ---------- mobile: sidebar collapses behind a floating bottom-left handle ----------
+const sidebarEl = document.getElementById('sidebar')
+const panelHandle = document.getElementById('panel-handle')
+const phoneMQ = window.matchMedia('(max-width: 720px)')
+
+function setSidebarCollapsed(collapsed) {
+  sidebarEl.classList.toggle('collapsed', collapsed)
+  panelHandle.classList.toggle('open', !collapsed)
+  panelHandle.setAttribute('aria-expanded', String(!collapsed))
+  panelHandle.querySelector('.ph-icon').textContent = collapsed ? '◐' : '✕'
+}
+panelHandle.addEventListener('click', () =>
+  setSidebarCollapsed(!sidebarEl.classList.contains('collapsed')))
+// tapping the scene dismisses the open sheet on phones
+for (const c of [orreryCanvas, sceneCanvas]) {
+  c.addEventListener('pointerdown', () => {
+    if (phoneMQ.matches && !sidebarEl.classList.contains('collapsed')) setSidebarCollapsed(true)
+  })
+}
+// phones start with the orrery, not the list; restore the panel on wide screens
+if (phoneMQ.matches) setSidebarCollapsed(true)
+phoneMQ.addEventListener('change', (e) => setSidebarCollapsed(e.matches))
 
 // ---------- views ----------
 function setView(view) {
@@ -125,6 +149,7 @@ function setView(view) {
   document.getElementById('ground-controls').classList.toggle('hidden', view !== 'ground')
   document.getElementById('info').classList.toggle('hidden', view === 'orrery')
   document.getElementById('zoom-controls').classList.toggle('hidden', view === 'ground')
+  panelHandle.classList.toggle('hidden', view === 'ground') // sidebar is hidden there too
   if (view !== 'orrery') planetCard.hide()
   else if (orrery.focus) planetCard.show(orrery.focus, planetState(orrery.focus, currentDate))
 
@@ -150,6 +175,7 @@ function scanToEclipse(e) {
   scan = { fromMs: currentDate.getTime(), toMs: e.peak.getTime(), t: 0, eclipse: e }
   playing = false; timeline.setPlaying(false)
   setView('orrery')
+  if (phoneMQ.matches) setSidebarCollapsed(true) // get the sheet out of the way
   statusEl.textContent = 'scanning new moons…'
 }
 
