@@ -133,10 +133,29 @@ h2 { margin: 14px 0 8px; font-size: 10px; text-transform: uppercase; letter-spac
 }
 
 @media (max-width: 720px) {
-  #hud { max-width: 58vw; left: 12px; top: 12px; padding: 10px 12px; }
-  .sub.hint { display: none; } /* desktop gestures; phones get buttons */
-  #clockbox { top: 12px; right: 12px; min-width: 0; padding: 8px 10px; }
-  .clock { font-size: 13px; }
+  #hud { max-width: 46vw; left: 12px; top: 12px; padding: 10px 12px; }
+  #hud .sub { display: none; } /* keep just the title + view tabs on phones */
+  #clockbox { top: 12px; right: 12px; min-width: 0; padding: 7px 9px; }
+  .clock { font-size: 11px; }
+  .status { font-size: 10px; }
+
+  /* Replay / Back stack under the clock instead of floating top-center
+     (where they overlapped the title and the clock) */
+  #ground-controls {
+    top: calc(env(safe-area-inset-top) + 76px);
+    left: auto; right: 12px; transform: none;
+    flex-direction: column; align-items: flex-end; gap: 6px;
+  }
+  #ground-controls .btn { padding: 6px 10px; font-size: 11px; }
+
+  /* In Ground POV the info card collapses behind the same bottom-left
+     handle, so totality isn't hidden behind a wall of text */
+  #info { transition: transform 0.25s ease, visibility 0s 0s; }
+  #info.collapsed {
+    transform: translateY(calc(100% + 240px));
+    visibility: hidden; pointer-events: none;
+    transition: transform 0.25s ease, visibility 0s 0.25s;
+  }
 
   /* The sidebar becomes a bottom sheet that slides away behind a floating
      button (#panel-handle), so the orrery is what you see first on a phone. */

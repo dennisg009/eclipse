@@ -110,28 +110,48 @@ const eclipses = upcomingTotalEclipses(new Date(), 15)
 panel.setEclipses(eclipses)
 document.getElementById('ph-badge').textContent = String(eclipses.length)
 
-// ---------- mobile: sidebar collapses behind a floating bottom-left handle ----------
+// ---------- mobile: panels collapse behind a floating bottom-left handle ----------
+// The handle controls whichever panel matters in the current view: the eclipse
+// sidebar normally, the eclipse-info card in Ground POV. Each remembers its
+// own collapsed state.
 const sidebarEl = document.getElementById('sidebar')
+const infoEl = document.getElementById('info')
 const panelHandle = document.getElementById('panel-handle')
+const phBadge = document.getElementById('ph-badge')
 const phoneMQ = window.matchMedia('(max-width: 720px)')
+const mobCollapsed = { sidebar: false, info: false }
 
-function setSidebarCollapsed(collapsed) {
-  sidebarEl.classList.toggle('collapsed', collapsed)
+function mobKey() { return activeView === 'ground' ? 'info' : 'sidebar' }
+
+function syncMobilePanels() {
+  sidebarEl.classList.toggle('collapsed', mobCollapsed.sidebar)
+  infoEl.classList.toggle('collapsed', mobCollapsed.info)
+  phBadge.classList.toggle('hidden', activeView === 'ground') // count is list-specific
+  const collapsed = mobCollapsed[mobKey()]
   panelHandle.classList.toggle('open', !collapsed)
   panelHandle.setAttribute('aria-expanded', String(!collapsed))
   panelHandle.querySelector('.ph-icon').textContent = collapsed ? '◐' : '✕'
 }
-panelHandle.addEventListener('click', () =>
-  setSidebarCollapsed(!sidebarEl.classList.contains('collapsed')))
-// tapping the scene dismisses the open sheet on phones
+
+function setPanelCollapsed(collapsed) {
+  mobCollapsed[mobKey()] = collapsed
+  syncMobilePanels()
+}
+panelHandle.addEventListener('click', () => setPanelCollapsed(!mobCollapsed[mobKey()]))
+// tapping the scene dismisses the open panel on phones
 for (const c of [orreryCanvas, sceneCanvas]) {
   c.addEventListener('pointerdown', () => {
-    if (phoneMQ.matches && !sidebarEl.classList.contains('collapsed')) setSidebarCollapsed(true)
+    if (phoneMQ.matches && !mobCollapsed[mobKey()]) setPanelCollapsed(true)
   })
 }
-// phones start with the orrery, not the list; restore the panel on wide screens
-if (phoneMQ.matches) setSidebarCollapsed(true)
-phoneMQ.addEventListener('change', (e) => setSidebarCollapsed(e.matches))
+// phones start with the visualization, not the panels; restore on wide screens
+if (phoneMQ.matches) { mobCollapsed.sidebar = true; mobCollapsed.info = true }
+syncMobilePanels()
+phoneMQ.addEventListener('change', (e) => {
+  mobCollapsed.sidebar = e.matches
+  mobCollapsed.info = e.matches
+  syncMobilePanels()
+})
 
 // ---------- views ----------
 function setView(view) {
@@ -149,7 +169,12 @@ function setView(view) {
   document.getElementById('ground-controls').classList.toggle('hidden', view !== 'ground')
   document.getElementById('info').classList.toggle('hidden', view === 'orrery')
   document.getElementById('zoom-controls').classList.toggle('hidden', view === 'ground')
-  panelHandle.classList.toggle('hidden', view === 'ground') // sidebar is hidden there too
+  // On phones, arriving in Ground POV starts with the info card tucked away
+  // so totality is front and center; the handle opens it on demand. Outside
+  // Ground POV the handle controls the sidebar, so un-collapse the card —
+  // otherwise it would be stranded invisible in the Earth view.
+  if (phoneMQ.matches) mobCollapsed.info = (view === 'ground')
+  syncMobilePanels()
   if (view !== 'orrery') planetCard.hide()
   else if (orrery.focus) planetCard.show(orrery.focus, planetState(orrery.focus, currentDate))
 
@@ -175,7 +200,7 @@ function scanToEclipse(e) {
   scan = { fromMs: currentDate.getTime(), toMs: e.peak.getTime(), t: 0, eclipse: e }
   playing = false; timeline.setPlaying(false)
   setView('orrery')
-  if (phoneMQ.matches) setSidebarCollapsed(true) // get the sheet out of the way
+  if (phoneMQ.matches) setPanelCollapsed(true) // get the sheet out of the way
   statusEl.textContent = 'scanning new moons…'
 }
 
